@@ -1,0 +1,244 @@
+/* Sentinel Status Dashboard */
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --border: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #eab308;
+  --accent: #3b82f6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.status-badge {
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.healthy { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+.status-badge.degraded { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+.status-badge.loading { background: var(--surface); color: var(--muted); }
+
+/* Sections */
+h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+section { margin-bottom: 2.5rem; }
+
+/* Monitor Grid */
+.monitor-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.monitor-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: var(--surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.monitor-card:hover { background: var(--surface-hover); }
+
+.monitor-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.pass { background: var(--green); box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+.status-dot.fail { background: var(--red); box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+
+.monitor-name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.monitor-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.latency { font-variant-numeric: tabular-nums; }
+
+/* Uptime Bars */
+.uptime-container { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.uptime-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.uptime-label {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  width: 180px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.uptime-bar {
+  flex: 1;
+  height: 24px;
+  display: flex;
+  gap: 1px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.uptime-segment {
+  flex: 1;
+  min-width: 2px;
+}
+
+.uptime-segment.pass { background: var(--green); }
+.uptime-segment.fail { background: var(--red); }
+.uptime-segment.unknown { background: var(--surface); }
+
+.uptime-pct {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  width: 55px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.uptime-pct.good { color: var(--green); }
+.uptime-pct.warn { color: var(--yellow); }
+.uptime-pct.bad { color: var(--red); }
+
+/* Incidents */
+.incident-card {
+  padding: 1rem;
+  background: var(--surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}
+
+.incident-card .title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.incident-card .meta {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.incident-card.active { border-left: 3px solid var(--red); }
+.incident-card.resolved { border-left: 3px solid var(--green); }
+
+.no-incidents {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+}
+
+/* Loading */
+.loading-placeholder {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* Footer */
+footer {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+footer a:hover { text-decoration: underline; }
+
+#last-updated { margin-top: 0.5rem; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .uptime-label { width: 100px; font-size: 0.75rem; }
+  .monitor-meta { gap: 0.5rem; }
+  header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+}

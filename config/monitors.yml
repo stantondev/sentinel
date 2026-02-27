@@ -1,0 +1,72 @@
+# Sentinel Monitor Configuration
+# Add your endpoints below. Anyone can fork this repo, edit this file,
+# and monitor their own sites for free via GitHub Actions.
+
+settings:
+  # How many consecutive failures before opening an incident
+  failure_threshold: 2
+  # How many consecutive successes before closing an incident
+  recovery_threshold: 2
+  # Default timeout for all checks (ms)
+  default_timeout_ms: 15000
+
+monitors:
+  - name: "Inkwell API Health"
+    url: "https://api.inkwell.social/health"
+    method: GET
+    expected_status: 200
+    expected_body_contains: '"status":"ok"'
+    timeout_ms: 10000
+    tags: [api, critical]
+
+  - name: "Inkwell API Deep Health"
+    url: "https://api.inkwell.social/health/deep"
+    method: GET
+    headers:
+      X-Monitor-Key: "${MONITOR_API_KEY}"
+    expected_status: 200
+    expected_body_contains: '"status":"ok"'
+    timeout_ms: 10000
+    tags: [api, deep]
+
+  - name: "Inkwell Web Homepage"
+    url: "https://inkwell.social"
+    method: GET
+    expected_status: 200
+    timeout_ms: 15000
+    tags: [web, critical]
+
+  - name: "Inkwell Web Login"
+    url: "https://inkwell.social/login"
+    method: GET
+    expected_status: 200
+    timeout_ms: 15000
+    tags: [web]
+
+  - name: "Inkwell Web Explore"
+    url: "https://inkwell.social/explore"
+    method: GET
+    expected_status: 200
+    timeout_ms: 15000
+    tags: [web]
+
+  - name: "Inkwell Web Roadmap"
+    url: "https://inkwell.social/roadmap"
+    method: GET
+    expected_status: 200
+    timeout_ms: 15000
+    tags: [web]
+
+  - name: "Inkwell RSS Feed"
+    url: "https://api.inkwell.social/api/users/stanton/feed.xml"
+    method: GET
+    expected_status: 200
+    timeout_ms: 10000
+    tags: [api, federation]
+
+  - name: "Inkwell WebFinger"
+    url: "https://api.inkwell.social/.well-known/webfinger?resource=acct:stanton@inkwell.social"
+    method: GET
+    expected_status: 200
+    timeout_ms: 10000
+    tags: [api, federation]

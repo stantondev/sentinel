@@ -1,0 +1,14 @@
+# Results (generated during checks)
+results.json
+state.json
+/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

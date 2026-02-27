@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel Status</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <span class="logo-icon">&#9670;</span>
+        <h1>Sentinel</h1>
+      </div>
+      <div id="overall-status" class="status-badge loading">Loading...</div>
+    </header>
+
+    <section class="status-section">
+      <h2>Current Status</h2>
+      <div id="monitors" class="monitor-grid">
+        <div class="loading-placeholder">Fetching status...</div>
+      </div>
+    </section>
+
+    <section class="uptime-section">
+      <h2>Uptime (Last 24 Hours)</h2>
+      <div id="uptime-bars" class="uptime-container">
+        <div class="loading-placeholder">Loading history...</div>
+      </div>
+    </section>
+
+    <section class="incidents-section">
+      <h2>Recent Incidents</h2>
+      <div id="incidents">
+        <div class="loading-placeholder">Loading incidents...</div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Powered by <a href="https://github.com/stantondev/sentinel">Sentinel</a> &mdash; free open-source monitoring via GitHub Actions</p>
+      <p id="last-updated"></p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

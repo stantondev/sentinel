@@ -1,0 +1,298 @@
+name: Sentinel Monitor
+
+on:
+  schedule:
+    # Every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Manual trigger for testing
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  MONITOR_API_KEY: ${{ secrets.MONITOR_API_KEY }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run health checks
+        id: checks
+        continue-on-error: true
+        run: |
+          chmod +x scripts/check.sh
+          bash scripts/check.sh config/monitors.yml
+
+      - name: Load previous state
+        id: state
+        run: |
+          # Try to read previous incident state from gh-pages branch
+          git fetch origin gh-pages --depth=1 2>/dev/null || true
+
+          if git show origin/gh-pages:state.json > /tmp/prev_state.json 2>/dev/null; then
+            echo "Previous state found"
+            echo "prev_status=$(jq -r '.status' /tmp/prev_state.json)" >> $GITHUB_OUTPUT
+            echo "incident_start=$(jq -r '.incident_start // empty' /tmp/prev_state.json)" >> $GITHUB_OUTPUT
+            echo "issue_number=$(jq -r '.issue_number // empty' /tmp/prev_state.json)" >> $GITHUB_OUTPUT
+            echo "failure_count=$(jq -r '.consecutive_failures // 0' /tmp/prev_state.json)" >> $GITHUB_OUTPUT
+          else
+            echo "No previous state, starting fresh"
+            echo "prev_status=healthy" >> $GITHUB_OUTPUT
+            echo "incident_start=" >> $GITHUB_OUTPUT
+            echo "issue_number=" >> $GITHUB_OUTPUT
+            echo "failure_count=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Evaluate results
+        id: eval
+        run: |
+          CURRENT=$(jq -r '.overall' results.json)
+          PREV="${{ steps.state.outputs.prev_status }}"
+          PREV_FAILURES="${{ steps.state.outputs.failure_count }}"
+          THRESHOLD=2
+
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+
+          if [ "$CURRENT" = "degraded" ]; then
+            FAILURES=$((PREV_FAILURES + 1))
+            echo "consecutive_failures=$FAILURES" >> $GITHUB_OUTPUT
+
+            if [ "$FAILURES" -ge "$THRESHOLD" ] && [ "$PREV" = "healthy" ]; then
+              echo "action=open_incident" >> $GITHUB_OUTPUT
+            elif [ "$FAILURES" -ge "$THRESHOLD" ]; then
+              echo "action=update_incident" >> $GITHUB_OUTPUT
+            else
+              echo "action=none" >> $GITHUB_OUTPUT
+              echo "Failure $FAILURES of $THRESHOLD threshold, waiting..."
+            fi
+          else
+            echo "consecutive_failures=0" >> $GITHUB_OUTPUT
+
+            if [ "$PREV" = "degraded" ]; then
+              echo "action=close_incident" >> $GITHUB_OUTPUT
+            else
+              echo "action=none" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      # --- INCIDENT: Open new ---
+      - name: Open incident issue
+        if: steps.eval.outputs.action == 'open_incident'
+        id: create_issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('results.json', 'utf8'));
+            const failed = results.monitors.filter(m => m.status === 'fail');
+            const failedNames = failed.map(m => m.name).join(', ');
+
+            const body = [
+              `## Incident Detected`,
+              `**Time:** ${results.timestamp}`,
+              `**Failed monitors:** ${results.failed} of ${results.total}`,
+              ``,
+              `### Failed Checks`,
+              ...failed.map(m => [
+                `- **${m.name}**`,
+                `  - URL: ${m.url}`,
+                `  - Status: \`${m.http_code}\` (expected 200)`,
+                `  - Latency: ${m.latency_ms}ms`,
+                `  - Error: ${m.error || 'N/A'}`,
+              ].join('\n')),
+              ``,
+              `### Runbooks`,
+              ...failed.flatMap(m => {
+                const links = [];
+                if (m.tags.includes('api')) links.push(`- [API Down Runbook](../blob/main/docs/runbooks/api-down.md)`);
+                if (m.tags.includes('web')) links.push(`- [Web Down Runbook](../blob/main/docs/runbooks/web-down.md)`);
+                if (m.tags.includes('deep')) links.push(`- [DB Degraded Runbook](../blob/main/docs/runbooks/db-degraded.md)`);
+                return links;
+              }),
+              ``,
+              `---`,
+              `*This issue was automatically created by Sentinel Monitor.*`,
+            ].join('\n');
+
+            const tags = [...new Set(failed.flatMap(m => m.tags))];
+            const labels = ['incident', 'active', ...tags];
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[INCIDENT] ${failedNames}`,
+              body: body,
+              labels: labels,
+            });
+
+            core.setOutput('issue_number', issue.data.number);
+            console.log(`Created incident issue #${issue.data.number}`);
+
+      - name: Alert Slack (failure)
+        if: steps.eval.outputs.action == 'open_incident'
+        run: |
+          chmod +x scripts/alert.sh
+          bash scripts/alert.sh failure results.json
+
+      # --- INCIDENT: Update existing ---
+      - name: Update incident issue
+        if: steps.eval.outputs.action == 'update_incident' && steps.state.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('results.json', 'utf8'));
+            const failed = results.monitors.filter(m => m.status === 'fail');
+
+            const body = [
+              `**Update at ${results.timestamp}**`,
+              `Still failing: ${failed.map(m => `${m.name} (\`${m.http_code}\`)`).join(', ')}`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt('${{ steps.state.outputs.issue_number }}'),
+              body: body,
+            });
+
+      # --- INCIDENT: Close (recovered) ---
+      - name: Close incident issue
+        if: steps.eval.outputs.action == 'close_incident' && steps.state.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = parseInt('${{ steps.state.outputs.issue_number }}');
+            const incidentStart = '${{ steps.state.outputs.incident_start }}';
+            const now = new Date().toISOString();
+            const start = new Date(incidentStart);
+            const durationMs = Date.now() - start.getTime();
+            const durationMin = Math.round(durationMs / 60000);
+
+            const body = [
+              `## Resolved`,
+              `**Recovered at:** ${now}`,
+              `**Duration:** ${durationMin} minutes`,
+              ``,
+              `All monitors are responding normally.`,
+              ``,
+              `---`,
+              `*Automatically resolved by Sentinel Monitor.*`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: body,
+            });
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              state: 'closed',
+              labels: ['incident', 'resolved'],
+            });
+
+            console.log(`Closed incident issue #${issueNumber} (duration: ${durationMin} min)`);
+
+      - name: Alert Slack (recovery)
+        if: steps.eval.outputs.action == 'close_incident'
+        run: |
+          # Calculate duration
+          INCIDENT_START="${{ steps.state.outputs.incident_start }}"
+          if [ -n "$INCIDENT_START" ]; then
+            START_EPOCH=$(date -d "$INCIDENT_START" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$INCIDENT_START" +%s 2>/dev/null || echo "0")
+            NOW_EPOCH=$(date +%s)
+            DURATION_SEC=$((NOW_EPOCH - START_EPOCH))
+            DURATION_MIN=$((DURATION_SEC / 60))
+            export INCIDENT_DURATION="${DURATION_MIN} minutes"
+          else
+            export INCIDENT_DURATION="unknown"
+          fi
+
+          chmod +x scripts/alert.sh
+          bash scripts/alert.sh recovery results.json
+
+      # --- Update state + dashboard data ---
+      - name: Update state and dashboard
+        run: |
+          CURRENT="${{ steps.eval.outputs.current }}"
+          FAILURES="${{ steps.eval.outputs.consecutive_failures }}"
+          ACTION="${{ steps.eval.outputs.action }}"
+
+          # Determine issue number
+          if [ "$ACTION" = "open_incident" ]; then
+            ISSUE_NUMBER="${{ steps.create_issue.outputs.issue_number }}"
+            INCIDENT_START=$(jq -r '.timestamp' results.json)
+          elif [ "$ACTION" = "close_incident" ]; then
+            ISSUE_NUMBER=""
+            INCIDENT_START=""
+          else
+            ISSUE_NUMBER="${{ steps.state.outputs.issue_number }}"
+            INCIDENT_START="${{ steps.state.outputs.incident_start }}"
+          fi
+
+          # Write state.json
+          jq -n \
+            --arg status "$CURRENT" \
+            --arg issue_number "$ISSUE_NUMBER" \
+            --arg incident_start "$INCIDENT_START" \
+            --argjson failures "$FAILURES" \
+            '{
+              status: $status,
+              issue_number: (if $issue_number == "" then null else ($issue_number | tonumber) end),
+              incident_start: (if $incident_start == "" then null else $incident_start end),
+              consecutive_failures: $failures,
+              last_updated: (now | todate)
+            }' > state.json
+
+          # Append to history (keep last 2016 entries = 7 days at 5-min intervals)
+          HISTORY_FILE="dashboard/history.json"
+          if git show origin/gh-pages:$HISTORY_FILE > /tmp/history.json 2>/dev/null; then
+            # Append current results and trim to 2016 entries
+            jq --argjson new "$(cat results.json)" \
+              '. + [$new] | .[-2016:]' /tmp/history.json > "$HISTORY_FILE"
+          else
+            jq -s '.' results.json > "$HISTORY_FILE"
+          fi
+
+          # Copy current results for dashboard
+          cp results.json dashboard/status.json
+          cp state.json dashboard/state.json
+
+      - name: Deploy to gh-pages
+        run: |
+          git config user.name "Sentinel Bot"
+          git config user.email "sentinel@users.noreply.github.com"
+
+          # Stash dashboard files
+          cp -r dashboard /tmp/dashboard_deploy
+          cp state.json /tmp/state_deploy.json
+
+          # Switch to gh-pages branch (create if needed)
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Copy files
+          cp -r /tmp/dashboard_deploy/* .
+          cp /tmp/state_deploy.json state.json
+
+          # Commit and push
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to deploy"
+          else
+            git commit -m "Update status — $(date -u +"%Y-%m-%d %H:%M UTC")"
+            git push origin gh-pages
+          fi

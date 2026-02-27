@@ -1,0 +1,19 @@
+# Sentinel Alerting Configuration
+# Configure where alerts are sent when monitors fail or recover.
+
+slack:
+  # Webhook URL is read from SLACK_WEBHOOK_URL secret — never commit it here
+  enabled: true
+  channel: "#alerts"
+
+  # Customize alert appearance
+  failure_color: "#dc2626"   # red-600
+  recovery_color: "#16a34a"  # green-600
+  warning_color: "#d97706"   # amber-600
+
+github_issues:
+  enabled: true
+  labels:
+    - "incident"
+    - "automated"
+  # Additional labels are added from monitor tags (e.g., "api", "web", "critical")
