@@ -276,6 +276,9 @@ jobs:
           cp -r dashboard /tmp/dashboard_deploy
           cp state.json /tmp/state_deploy.json
 
+          # Clean generated files before branch switch (prevents untracked file conflicts)
+          rm -rf dashboard results.json state.json
+
           # Switch to gh-pages branch (create if needed)
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             git checkout -f gh-pages
