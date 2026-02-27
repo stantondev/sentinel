@@ -278,7 +278,7 @@ jobs:
 
           # Switch to gh-pages branch (create if needed)
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-            git checkout gh-pages
+            git checkout -f gh-pages
           else
             git checkout --orphan gh-pages
             git rm -rf . 2>/dev/null || true
