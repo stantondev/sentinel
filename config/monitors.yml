@@ -70,3 +70,37 @@ monitors:
     expected_status: 200
     timeout_ms: 10000
     tags: [api, federation]
+
+  - name: "Inkwell AP Actor"
+    url: "https://inkwell.social/users/stanton"
+    method: GET
+    headers:
+      Accept: "application/activity+json"
+    expected_status: 200
+    expected_body_contains: '"type":"Person"'
+    timeout_ms: 10000
+    tags: [web, federation, critical]
+
+  - name: "Inkwell AP Actor Discoverable"
+    url: "https://inkwell.social/users/stanton"
+    method: GET
+    headers:
+      Accept: "application/activity+json"
+    expected_status: 200
+    expected_body_contains: '"discoverable":true'
+    timeout_ms: 10000
+    tags: [web, federation]
+
+  - name: "Inkwell Avatar Proxy"
+    url: "https://inkwell.social/api/avatars/stanton"
+    method: GET
+    expected_status: 200
+    timeout_ms: 10000
+    tags: [web, federation, critical]
+
+  - name: "Inkwell WebFinger via Frontend"
+    url: "https://inkwell.social/.well-known/webfinger?resource=acct:stanton@inkwell.social"
+    method: GET
+    expected_status: 200
+    timeout_ms: 10000
+    tags: [web, federation]
