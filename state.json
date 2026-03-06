@@ -2,6 +2,6 @@
   "status": "degraded",
   "issue_number": null,
   "incident_start": null,
-  "consecutive_failures": 5,
-  "last_updated": "2026-03-06T14:26:19Z"
+  "consecutive_failures": 6,
+  "last_updated": "2026-03-06T15:04:17Z"
 }
