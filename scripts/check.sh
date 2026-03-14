@@ -13,7 +13,8 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # Each monitor block is extracted and checked individually
 parse_monitors() {
   local in_monitor=false
-  local name="" url="" method="GET" expected_status="200" expected_body="" timeout_ms="15000" tags="" headers_key="" headers_val=""
+  local name="" url="" method="GET" expected_status="200" expected_body="" timeout_ms="15000" tags="" headers=""
+  local in_headers=false
 
   local results="[]"
   local monitor_count=0
@@ -23,37 +24,57 @@ parse_monitors() {
     if echo "$line" | grep -q '^\s*- name:'; then
       # Save previous monitor if we had one
       if [ -n "$name" ]; then
-        result=$(check_endpoint "$name" "$url" "$method" "$expected_status" "$expected_body" "$timeout_ms" "$tags" "$headers_key" "$headers_val")
+        result=$(check_endpoint "$name" "$url" "$method" "$expected_status" "$expected_body" "$timeout_ms" "$tags" "$headers")
         results=$(echo "$results" | jq --argjson r "$result" '. + [$r]')
         monitor_count=$((monitor_count + 1))
       fi
       name=$(echo "$line" | sed 's/.*name: *"\(.*\)"/\1/')
-      url="" method="GET" expected_status="200" expected_body="" timeout_ms="15000" tags="" headers_key="" headers_val=""
+      url="" method="GET" expected_status="200" expected_body="" timeout_ms="15000" tags="" headers=""
+      in_headers=false
     elif echo "$line" | grep -q '^\s*url:'; then
       url=$(echo "$line" | sed 's/.*url: *"\(.*\)"/\1/')
+      in_headers=false
     elif echo "$line" | grep -q '^\s*method:'; then
       method=$(echo "$line" | sed 's/.*method: *//')
+      in_headers=false
     elif echo "$line" | grep -q '^\s*expected_status:'; then
       expected_status=$(echo "$line" | sed 's/.*expected_status: *//')
+      in_headers=false
     elif echo "$line" | grep -q '^\s*expected_body_contains:'; then
       expected_body=$(echo "$line" | sed "s/.*expected_body_contains: *'\(.*\)'/\1/" | sed 's/.*expected_body_contains: *"\(.*\)"/\1/')
+      in_headers=false
     elif echo "$line" | grep -q '^\s*timeout_ms:'; then
       timeout_ms=$(echo "$line" | sed 's/.*timeout_ms: *//')
+      in_headers=false
     elif echo "$line" | grep -q '^\s*tags:'; then
       tags=$(echo "$line" | sed 's/.*tags: *\[//' | sed 's/\]//' | tr -d ' ')
-    elif echo "$line" | grep -qE '^\s+X-Monitor-Key:'; then
-      headers_key="X-Monitor-Key"
-      headers_val=$(echo "$line" | sed 's/.*X-Monitor-Key: *"\(.*\)"/\1/')
-      # Substitute env vars
-      if echo "$headers_val" | grep -q '${MONITOR_API_KEY}'; then
-        headers_val="${MONITOR_API_KEY:-}"
+      in_headers=false
+    elif echo "$line" | grep -q '^\s*headers:'; then
+      in_headers=true
+    elif [ "$in_headers" = true ] && echo "$line" | grep -qE '^\s+[A-Za-z][-A-Za-z0-9]*:'; then
+      # Parse header line: "      Key: "value""
+      local hdr_key hdr_val
+      hdr_key=$(echo "$line" | sed 's/^[[:space:]]*//' | sed 's/:.*//')
+      hdr_val=$(echo "$line" | sed 's/[^:]*: *//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\(.*\)'$/\1/")
+      # Substitute env vars (e.g., ${MONITOR_API_KEY})
+      hdr_val=$(echo "$hdr_val" | sed "s/\${MONITOR_API_KEY}/${MONITOR_API_KEY:-}/g")
+      # Append to headers string (pipe-delimited: "Key1: val1|Key2: val2")
+      if [ -n "$headers" ]; then
+        headers="${headers}|${hdr_key}: ${hdr_val}"
+      else
+        headers="${hdr_key}: ${hdr_val}"
+      fi
+    else
+      # Any non-header indented line ends the headers block
+      if echo "$line" | grep -qE '^\s+[a-z]'; then
+        in_headers=false
       fi
     fi
   done < "$CONFIG_FILE"
 
   # Process last monitor
   if [ -n "$name" ]; then
-    result=$(check_endpoint "$name" "$url" "$method" "$expected_status" "$expected_body" "$timeout_ms" "$tags" "$headers_key" "$headers_val")
+    result=$(check_endpoint "$name" "$url" "$method" "$expected_status" "$expected_body" "$timeout_ms" "$tags" "$headers")
     results=$(echo "$results" | jq --argjson r "$result" '. + [$r]')
     monitor_count=$((monitor_count + 1))
   fi
@@ -62,14 +83,18 @@ parse_monitors() {
 }
 
 check_endpoint() {
-  local name="$1" url="$2" method="$3" expected_status="$4" expected_body="$5" timeout_ms="$6" tags="$7" headers_key="$8" headers_val="$9"
+  local name="$1" url="$2" method="$3" expected_status="$4" expected_body="$5" timeout_ms="$6" tags="$7" headers="$8"
   local timeout_sec=$((timeout_ms / 1000))
 
   # Build curl command
   local curl_args=(-s -o /tmp/sentinel_body -w '%{http_code}\n%{time_total}' --max-time "$timeout_sec" -X "$method")
 
-  if [ -n "$headers_key" ] && [ -n "$headers_val" ]; then
-    curl_args+=(-H "$headers_key: $headers_val")
+  # Add all headers (pipe-delimited: "Key1: val1|Key2: val2")
+  if [ -n "$headers" ]; then
+    IFS='|' read -ra hdr_array <<< "$headers"
+    for hdr in "${hdr_array[@]}"; do
+      curl_args+=(-H "$hdr")
+    done
   fi
 
   curl_args+=("$url")
