@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-18T22:26:04Z",
+  "timestamp": "2026-03-18T22:56:20Z",
   "total": 12,
   "passed": 12,
   "failed": 0,
@@ -10,155 +10,155 @@
       "url": "https://api.inkwell.social/health",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 215,
+      "latency_ms": 415,
       "error": null,
       "tags": [
         "api",
         "critical"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell API Deep Health",
       "url": "https://api.inkwell.social/health/deep",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 230,
+      "latency_ms": 280,
       "error": null,
       "tags": [
         "api",
         "deep"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell Web Homepage",
       "url": "https://inkwell.social",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 197,
+      "latency_ms": 580,
       "error": null,
       "tags": [
         "web",
         "critical"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell Web Login",
       "url": "https://inkwell.social/login",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 56,
+      "latency_ms": 158,
       "error": null,
       "tags": [
         "web"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell Web Explore",
       "url": "https://inkwell.social/explore",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 287,
+      "latency_ms": 653,
       "error": null,
       "tags": [
         "web"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell Web Roadmap",
       "url": "https://inkwell.social/roadmap",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 104,
+      "latency_ms": 446,
       "error": null,
       "tags": [
         "web"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell RSS Feed",
       "url": "https://api.inkwell.social/api/users/stanton/feed.xml",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 45,
+      "latency_ms": 256,
       "error": null,
       "tags": [
         "api",
         "federation"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell WebFinger",
       "url": "https://api.inkwell.social/.well-known/webfinger?resource=acct:stanton@inkwell.social",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 62,
+      "latency_ms": 101,
       "error": null,
       "tags": [
         "api",
         "federation"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell AP Actor",
       "url": "https://inkwell.social/users/stanton",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 47,
+      "latency_ms": 156,
       "error": null,
       "tags": [
         "web",
         "federation",
         "critical"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell AP Actor Discoverable",
       "url": "https://inkwell.social/users/stanton",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 45,
+      "latency_ms": 108,
       "error": null,
       "tags": [
         "web",
         "federation"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell Avatar Proxy",
       "url": "https://inkwell.social/api/avatars/stanton",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 47,
+      "latency_ms": 118,
       "error": null,
       "tags": [
         "web",
         "federation",
         "critical"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     },
     {
       "name": "Inkwell WebFinger via Frontend",
       "url": "https://inkwell.social/.well-known/webfinger?resource=acct:stanton@inkwell.social",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 47,
+      "latency_ms": 160,
       "error": null,
       "tags": [
         "web",
         "federation"
       ],
-      "timestamp": "2026-03-18T22:26:04Z"
+      "timestamp": "2026-03-18T22:56:20Z"
     }
   ]
 }
