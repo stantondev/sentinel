@@ -63,15 +63,19 @@ jobs:
             echo "consecutive_failures=$FAILURES" >> $GITHUB_OUTPUT
 
             if [ "$FAILURES" -ge "$THRESHOLD" ] && [ "$PREV" = "healthy" ]; then
+              echo "resolved_status=degraded" >> $GITHUB_OUTPUT
               echo "action=open_incident" >> $GITHUB_OUTPUT
             elif [ "$FAILURES" -ge "$THRESHOLD" ]; then
+              echo "resolved_status=degraded" >> $GITHUB_OUTPUT
               echo "action=update_incident" >> $GITHUB_OUTPUT
             else
+              echo "resolved_status=$PREV" >> $GITHUB_OUTPUT
               echo "action=none" >> $GITHUB_OUTPUT
               echo "Failure $FAILURES of $THRESHOLD threshold, waiting..."
             fi
           else
             echo "consecutive_failures=0" >> $GITHUB_OUTPUT
+            echo "resolved_status=healthy" >> $GITHUB_OUTPUT
 
             if [ "$PREV" = "degraded" ]; then
               echo "action=close_incident" >> $GITHUB_OUTPUT
@@ -203,7 +207,7 @@ jobs:
             console.log(`Closed incident issue #${issueNumber} (duration: ${durationMin} min)`);
 
       - name: Alert Slack (recovery)
-        if: steps.eval.outputs.action == 'close_incident'
+        if: steps.eval.outputs.action == 'close_incident' && steps.state.outputs.issue_number != ''
         run: |
           # Calculate duration
           INCIDENT_START="${{ steps.state.outputs.incident_start }}"
@@ -223,7 +227,7 @@ jobs:
       # --- Update state + dashboard data ---
       - name: Update state and dashboard
         run: |
-          CURRENT="${{ steps.eval.outputs.current }}"
+          CURRENT="${{ steps.eval.outputs.resolved_status }}"
           FAILURES="${{ steps.eval.outputs.consecutive_failures }}"
           ACTION="${{ steps.eval.outputs.action }}"
 
