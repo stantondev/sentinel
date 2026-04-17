@@ -21,6 +21,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check maintenance mode
+        id: maint
+        run: |
+          # Read maintenance.json from gh-pages branch. If it contains a
+          # paused_until timestamp in the future, we're in a maintenance
+          # window: health checks still run and dashboard still updates,
+          # but no incidents open and no Slack alerts fire.
+          git fetch origin gh-pages --depth=1 2>/dev/null || true
+          if git show origin/gh-pages:maintenance.json > /tmp/maint.json 2>/dev/null; then
+            UNTIL=$(jq -r '.paused_until // empty' /tmp/maint.json)
+            REASON=$(jq -r '.reason // "unknown"' /tmp/maint.json)
+            if [ -n "$UNTIL" ]; then
+              # Portable GNU/BSD date parse
+              UNTIL_EPOCH=$(date -d "$UNTIL" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$UNTIL" +%s 2>/dev/null || echo 0)
+              NOW_EPOCH=$(date -u +%s)
+              if [ "$NOW_EPOCH" -lt "$UNTIL_EPOCH" ]; then
+                echo "paused=true" >> $GITHUB_OUTPUT
+                echo "🔕 Maintenance mode active until $UNTIL — reason: $REASON"
+                echo "Alerts and incidents will be suppressed this run."
+                exit 0
+              fi
+            fi
+          fi
+          echo "paused=false" >> $GITHUB_OUTPUT
+
       - name: Run health checks
         id: checks
         continue-on-error: true
@@ -54,9 +79,21 @@ jobs:
           CURRENT=$(jq -r '.overall' results.json)
           PREV="${{ steps.state.outputs.prev_status }}"
           PREV_FAILURES="${{ steps.state.outputs.failure_count }}"
+          PAUSED="${{ steps.maint.outputs.paused }}"
           THRESHOLD=2
 
           echo "current=$CURRENT" >> $GITHUB_OUTPUT
+
+          # During maintenance: freeze prior state, do not alert, exit early.
+          # The health check already ran (results.json is on disk for the
+          # dashboard update step). We simply don't react to failures.
+          if [ "$PAUSED" = "true" ]; then
+            echo "consecutive_failures=$PREV_FAILURES" >> $GITHUB_OUTPUT
+            echo "resolved_status=$PREV" >> $GITHUB_OUTPUT
+            echo "action=none" >> $GITHUB_OUTPUT
+            echo "Maintenance mode — state frozen, no alerts"
+            exit 0
+          fi
 
           if [ "$CURRENT" = "degraded" ]; then
             FAILURES=$((PREV_FAILURES + 1))
