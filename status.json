@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-28T21:17:04Z",
+  "timestamp": "2026-04-28T22:13:29Z",
   "total": 12,
-  "passed": 4,
-  "failed": 8,
+  "passed": 5,
+  "failed": 7,
   "overall": "degraded",
   "monitors": [
     {
@@ -10,13 +10,13 @@
       "url": "https://api.inkwell.social/health",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 9384,
+      "latency_ms": 9130,
       "error": null,
       "tags": [
         "api",
         "critical"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell API Deep Health",
@@ -29,7 +29,7 @@
         "api",
         "deep"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell Web Homepage",
@@ -42,19 +42,19 @@
         "web",
         "critical"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell Web Login",
       "url": "https://inkwell.social/login",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 214,
+      "latency_ms": 160,
       "error": null,
       "tags": [
         "web"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell Web Explore",
@@ -66,7 +66,7 @@
       "tags": [
         "web"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell Web Roadmap",
@@ -78,7 +78,7 @@
       "tags": [
         "web"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell RSS Feed",
@@ -91,20 +91,20 @@
         "api",
         "federation"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell WebFinger",
       "url": "https://api.inkwell.social/.well-known/webfinger?resource=acct:stanton@inkwell.social",
-      "status": "pass",
-      "http_code": 200,
-      "latency_ms": 5344,
-      "error": null,
+      "status": "fail",
+      "http_code": 0,
+      "latency_ms": 0,
+      "error": "Connection failed or timed out",
       "tags": [
         "api",
         "federation"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell AP Actor",
@@ -118,47 +118,47 @@
         "federation",
         "critical"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell AP Actor Discoverable",
       "url": "https://inkwell.social/users/stanton",
-      "status": "fail",
-      "http_code": 0,
-      "latency_ms": 0,
-      "error": "Connection failed or timed out",
+      "status": "pass",
+      "http_code": 200,
+      "latency_ms": 7230,
+      "error": null,
       "tags": [
         "web",
         "federation"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell Avatar Proxy",
       "url": "https://inkwell.social/api/avatars/stanton",
       "status": "pass",
       "http_code": 200,
-      "latency_ms": 131,
+      "latency_ms": 138,
       "error": null,
       "tags": [
         "web",
         "federation",
         "critical"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     },
     {
       "name": "Inkwell WebFinger via Frontend",
       "url": "https://inkwell.social/.well-known/webfinger?resource=acct:stanton@inkwell.social",
-      "status": "fail",
-      "http_code": 0,
-      "latency_ms": 0,
-      "error": "Connection failed or timed out",
+      "status": "pass",
+      "http_code": 200,
+      "latency_ms": 934,
+      "error": null,
       "tags": [
         "web",
         "federation"
       ],
-      "timestamp": "2026-04-28T21:17:04Z"
+      "timestamp": "2026-04-28T22:13:29Z"
     }
   ]
 }
