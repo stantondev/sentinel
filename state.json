@@ -1,7 +1,7 @@
 {
-  "status": "degraded",
-  "issue_number": 4,
-  "incident_start": "2026-04-29T10:29:26Z",
-  "consecutive_failures": 3,
-  "last_updated": "2026-04-29T12:05:50Z"
+  "status": "healthy",
+  "issue_number": null,
+  "incident_start": null,
+  "consecutive_failures": 0,
+  "last_updated": "2026-04-29T14:26:18Z"
 }
